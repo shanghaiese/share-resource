@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RestangularDoc2.md</title>
+<link rel="stylesheet" href="https://stackedit.io/res-min/themes/base.css" />
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body><div class="container"><h3 id="quick-configuration">Quick configuration</h3>
+
+<p><strong>Download</strong></p>
+
+
+
+<pre class="prettyprint"><code class=" hljs cmake">bower <span class="hljs-keyword">install</span> restangular
+npm <span class="hljs-keyword">install</span> restangular</code></pre>
+
+<p><br> <br>
+<strong>Setting Module and Inject</strong></p>
+
+<p><em>ilab.config.js</em></p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">angular.<span class="hljs-keyword">module</span>(<span class="hljs-string">'your-app'</span>, [<span class="hljs-string">'restangular'</span>]);</code></pre>
+
+<p><em>your own service.js or controller.js</em></p>
+
+
+
+<pre class="prettyprint"><code class=" hljs r">anguar.module(<span class="hljs-string">'ilabService'</span>).factory(<span class="hljs-string">'machine'</span>, machine);
+machine.$inject = [<span class="hljs-string">'Restangular'</span>];
+<span class="hljs-keyword">function</span> machine(Restangular) {
+    //<span class="hljs-keyword">...</span>
+}</code></pre>
+
+<p><br> <br>
+<strong>Create Restangular object</strong></p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">/<span class="hljs-regexp">/reach baseUrl/users</span>
+<span class="hljs-constant">Restangular</span>.all(<span class="hljs-string">'users'</span>);
+
+<span class="hljs-regexp">//reach</span> baseUrl/users/<span class="hljs-number">123</span> 
+<span class="hljs-constant">Restangular</span>.one(<span class="hljs-string">'users'</span>, <span class="hljs-number">123</span>);
+
+<span class="hljs-regexp">//reach</span> baseUrl/users/<span class="hljs-number">123</span> <span class="hljs-keyword">or</span> baseUrl/users/<span class="hljs-number">1234</span>
+<span class="hljs-constant">Restangular</span>.several(<span class="hljs-string">'users'</span>, <span class="hljs-number">123</span>, <span class="hljs-number">1234</span>);</code></pre>
+
+<p><br></p>
+
+
+
+<h3 id="usage">Usage</h3>
+
+
+
+<h4 id="configuration"><strong>Configuration</strong></h4>
+
+<p>Set in <code>RestangularProvider</code> or <code>Restangular</code> service to change the global configuration.</p>
+
+<blockquote>
+  <p><strong>Setting Options</strong></p>
+  
+  <ul>
+  <li><em>setBaseUrl</em>: default is an empty string, but you can set it as example below. </li>
+  <li><em>setExtraFields</em>: if need to save from your parent resources to display them</li>
+  <li><em>setParentless</em>: make URL simpler. (bool, array), bool: if all elements should be parentless. array: specifies the routes(types) of all elements that should be parentless. Like[‘buildings’]</li>
+  <li><em>setDefaultHttpFields</em>: <a href="http://docs.angularjs.org/api/ng.$http#parameters">http://docs.angularjs.org/api/ng.$http#parameters</a>, usually set <code>.setDefaultHttpFields ({cache: true});</code></li>
+  <li><em>addElementTransformer</em>: can add more method to a loaded object. <code>.aET('authors', false, function(element) {element.fetch = ...});</code></li>
+  <li><em>addResponseInterceptor</em>: (data, operation,what, url, response, deferred)</li>
+  <li><em>addRequestInterceptor</em>:(element, operation, what, url)</li>
+  <li><em>setErrorInterceptor</em>: called whenever there’s an error. </li>
+  <li><em>setRestangularFields</em>: can set Restangularized element. like (id, route, parentResource, restangularCollection, cannonicalld, etag, selfLink)</li>
+  <li><em>setDefaultRequestParams</em>: set default query parameters to be sent with requests and methods. </li>
+  <li><em>setFullResponse</em>: default is false. </li>
+  <li><em>setRequestSuffix</em>: <code>RestangularProvider.setRequestSuffix('.json');</code></li>
+  </ul>
+</blockquote>
+
+<pre class="prettyprint"><code class=" hljs php">    <span class="hljs-comment">//baseUrl</span>
+    RestangularProvider.setBaseUrl(<span class="hljs-string">'/services/api/'</span>);
+    <span class="hljs-comment">//setRestangularFields</span>
+    RestangularProvider.setRestangularFields({
+        selfLink: <span class="hljs-string">'self.href'</span>
+    });
+    <span class="hljs-comment">//setDefaultHttpFields</span>
+    RestangularProvider.setDefaultHttpFields({<span class="hljs-string">'withCredentials'</span>: <span class="hljs-keyword">true</span>});
+
+    <span class="hljs-comment">//setResponseInterceptor</span>
+    RestangularProvider.setResponseInterceptor(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data, operation, what)</span> {</span>
+        <span class="hljs-keyword">if</span> (operation == <span class="hljs-string">'getList'</span>) {
+            <span class="hljs-keyword">var</span> <span class="hljs-keyword">list</span> = data[what];
+            <span class="hljs-keyword">list</span>.metadata = data.metadata
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">list</span>;
+        }
+        <span class="hljs-keyword">return</span> data;
+    });
+    <span class="hljs-comment">//setRequestInterceptor</span>
+    RestangularProvider.setRequestInterceptor(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(elem, operation, what)</span> {</span>
+        <span class="hljs-keyword">if</span> (operation === <span class="hljs-string">'put'</span>) {
+            elem._id = undefined;
+            <span class="hljs-keyword">return</span> elem;
+        }
+        <span class="hljs-keyword">return</span> elem;
+    });
+    <span class="hljs-comment">//setErrorInterceptor</span>
+    RestangularProvider.setErrorInterceptor(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(response, deferred, responseHandler)</span> {</span>
+        <span class="hljs-keyword">if</span>(response.status == <span class="hljs-number">403</span>) {
+            <span class="hljs-comment">//...</span>
+        }
+    });
+
+    <span class="hljs-comment">//setRestangularFields</span>
+    RestangularProvider.setRestangularFields({
+        id: <span class="hljs-string">'_id.$oid'</span>
+    });
+    <span class="hljs-comment">//setDefaultRequestParams</span>
+    Restangular.setDefaultRequestParams([<span class="hljs-string">'remove'</span>, <span class="hljs-string">'post'</span>], {confirm: <span class="hljs-keyword">true</span>});
+}</code></pre>
+
+<pre class="prettyprint"><code class=" hljs php"><span class="hljs-comment">// Restangular service that uses setFullResponse</span>
+app.factory(<span class="hljs-string">'RestFulResponse'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Restangular)</span> {</span>
+  <span class="hljs-keyword">return</span> Restangular.withConfig(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(RestangularConfigurer)</span> {</span>
+    RestangularConfigurer.setFullResponse(<span class="hljs-keyword">true</span>);
+  });
+});
+
+<span class="hljs-comment">// Let's use it in the controller</span>
+app.controller(<span class="hljs-string">'MainCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Restangular, RestFulResponse)</span> {</span>
+
+  <span class="hljs-comment">// Uses full response configuration</span>
+  RestFulResponse.all(<span class="hljs-string">'users'</span>).getList().then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(response)</span> {</span>
+    <span class="hljs-variable">$scope</span>.users = response.data;
+    console.log(response.headers);
+  });
+});</code></pre>
+
+<p><br> <br>
+<strong>Setting multiple Restangular configuration:</strong> <br>
+one baseUrl is google, another is bing</p>
+
+<pre class="prettyprint"><code class=" hljs javascript"><span class="hljs-comment">// Global configuration</span>
+app.config(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(RestangularProvider)</span> {</span>
+  RestangularProvider.setBaseUrl(<span class="hljs-string">'http://www.google.com'</span>);
+  RestangularProvider.setRequestSuffix(<span class="hljs-string">'.json'</span>);
+});
+
+<span class="hljs-comment">// Restangular service that uses Bing</span>
+app.factory(<span class="hljs-string">'BingRestangular'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Restangular)</span> {</span>
+  <span class="hljs-keyword">return</span> Restangular.withConfig(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(RestangularConfigurer)</span> {</span>
+    RestangularConfigurer.setBaseUrl(<span class="hljs-string">'http://www.bing.com'</span>);
+  });
+});
+
+<span class="hljs-comment">// Let's use them from a controller</span>
+app.controller(<span class="hljs-string">'MainCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Restangular, BingRestangular)</span> {</span>
+
+  <span class="hljs-comment">// GET to http://www.google.com/users.json</span>
+  <span class="hljs-comment">// Uses global configuration</span>
+  Restangular.all(<span class="hljs-string">'users'</span>).getList()
+
+  <span class="hljs-comment">// GET to http://www.bing.com/users.json</span>
+  <span class="hljs-comment">// Uses Bing configuration which is based on Global one, therefore .json is added.</span>
+  BingRestangular.all(<span class="hljs-string">'users'</span>).getList()
+});</code></pre>
+
+<p><br></p>
+
+<h4 id="data"><strong>Data: </strong></h4>
+
+<p><strong>object-&gt;promise-&gt;array(data)</strong></p>
+
+<pre class="prettyprint"><code class=" hljs php"><span class="hljs-comment">//object</span>
+<span class="hljs-keyword">var</span> baseVMs = Restangular.all(<span class="hljs-string">'admin/virtual-machines'</span>);
+
+<span class="hljs-comment">//promise is obj.getList();</span>
+<span class="hljs-comment">//then get the data</span>
+<span class="hljs-comment">//**Method 1** - data from promise</span>
+baseVMs.getList().then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(vm)</span> {</span>
+    that.VMs = vm;
+}
+<span class="hljs-comment">//**Method 2** - empty array filled by returned data from server</span>
+that.VMs = baseVMs.<span class="hljs-variable">$object</span>;
+
+<span class="hljs-comment">//Direct use URL to initial variables</span>
+Restangular.allUrl(<span class="hljs-string">'googlers'</span>, <span class="hljs-string">'http://www.google.com/'</span>).getList();
+Restangular.oneUrl(<span class="hljs-string">'googlers'</span>, <span class="hljs-string">'http://www.google.com/1'</span>).get();
+
+
+<span class="hljs-comment">// Second way of creating Restangular object. URL and ID</span>
+<span class="hljs-keyword">var</span> account = Restangular.one(<span class="hljs-string">"accounts"</span>, <span class="hljs-number">123</span>);
+
+<span class="hljs-comment">// GET /accounts/123?single=true</span>
+<span class="hljs-variable">$scope</span>.account = account.get({single: <span class="hljs-keyword">true</span>});</code></pre>
+
+<p><br> <br>
+<strong>Nested data</strong></p>
+
+
+
+<pre class="prettyprint"><code class=" hljs livecodeserver">// Just <span class="hljs-constant">ONE</span> GET <span class="hljs-built_in">to</span> /accounts/<span class="hljs-number">123</span>/buildings/<span class="hljs-number">456</span>
+Restangular.<span class="hljs-constant">one</span>(<span class="hljs-string">'accounts'</span>, <span class="hljs-number">123</span>).<span class="hljs-constant">one</span>(<span class="hljs-string">'buildings'</span>, <span class="hljs-number">456</span>).<span class="hljs-built_in">get</span>()
+<span class="hljs-comment">
+// Just ONE GET to /accounts/123/buildings</span>
+Restangular.<span class="hljs-constant">one</span>(<span class="hljs-string">'accounts'</span>, <span class="hljs-number">123</span>).getList(<span class="hljs-string">'buildings'</span>)</code></pre>
+
+<p><br> <br>
+<strong>PUT/DELETE/POST</strong></p>
+
+
+
+<pre class="prettyprint"><code class=" hljs php"><span class="hljs-keyword">var</span> firstAccount = baseAccounts.getList().<span class="hljs-variable">$object</span>;
+baseAccounts.getList().then(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(accounts)</span> {</span>
+    <span class="hljs-keyword">var</span> firstAccount = accounts[<span class="hljs-number">0</span>];
+    <span class="hljs-variable">$scope</span>.buildings = firstAccount.getList(<span class="hljs-string">"buildings"</span>); <span class="hljs-comment">//nested</span>
+
+    <span class="hljs-comment">//PUT</span>
+    <span class="hljs-comment">//**Method 1**</span>
+    firstAccount.name = <span class="hljs-string">"Gonto"</span>;
+    firstAccount.put();
+    <span class="hljs-comment">//**Method 2**</span>
+    <span class="hljs-keyword">var</span> editFirstAccount = Restangular.copy(firstAccount);
+    editFirstAccount.name = <span class="hljs-string">"New Name"</span>;
+    editFirstAccount.put();
+    <span class="hljs-comment">//**Method 3** - put or post accordinly</span>
+    firstAccount.save();
+
+    <span class="hljs-comment">//DELETE</span>
+    firstAccount.remove();
+
+    <span class="hljs-comment">//POST to /accounts/123/buildings</span>
+    <span class="hljs-keyword">var</span> myBuilding = {
+        name: <span class="hljs-string">"Gonto's Building"</span>,
+        place: <span class="hljs-string">"Argentina"</span>
+    };
+    firstAccount.post(<span class="hljs-string">"Buildings"</span>, myBuilding).then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+        console.log(<span class="hljs-string">"Object saved OK"</span>);
+    }, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+        console.log(<span class="hljs-string">"There was an error saving"</span>);
+    });
+});</code></pre>
+
+<p><br></p>
+
+<h4 id="decoupled-service-hide-object"><strong>Decoupled Service - Hide Object</strong></h4>
+
+<p>Will <strong>not</strong> expose Restangular object. </p>
+
+<pre class="prettyprint"><code class=" hljs actionscript"><span class="hljs-comment">// Declare factory</span>
+module.factory(<span class="hljs-string">'Users'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Restangular)</span> {</span>
+  <span class="hljs-keyword">return</span> Restangular.service(<span class="hljs-string">'users'</span>);
+});
+
+<span class="hljs-comment">// In your controller you inject Users</span>
+Users.<span class="hljs-keyword">get</span>(<span class="hljs-number">2</span>) <span class="hljs-comment">// GET to /users/2</span>
+Users.post({data}) <span class="hljs-comment">// POST to /users</span>
+
+<span class="hljs-comment">// GET to /users</span>
+Users.getList().then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(users)</span> {</span>
+  <span class="hljs-keyword">var</span> user = users[<span class="hljs-number">0</span>]; <span class="hljs-comment">// user === {id: 1, name: "Tonto"}</span>
+  user.name = <span class="hljs-string">"Gonto"</span>;
+  <span class="hljs-comment">// PUT to /users/1</span>
+  user.put();
+  <span class="hljs-comment">// Nested</span>
+  <span class="hljs-keyword">var</span> Cars = Restangular.service(<span class="hljs-string">'cars'</span>, Restangular.one(<span class="hljs-string">'users'</span>, <span class="hljs-number">1</span>));
+  Cars.getList() <span class="hljs-comment">// GET to /users/1/cars</span>
+})</code></pre>
+
+
+
+<h4 id="point-to-restangular-object-methods"><strong>Point to Restangular object methods</strong></h4>
+
+<blockquote>
+  <ul>
+  <li>one(route, id)</li>
+  <li>all(route)</li>
+  <li>oneUrl(route, url): <code>Restangular.oneUrl('googles', 'http://www.google.com/1).get();</code></li>
+  <li>allUrl(route, url): <code>Restangular.oneUrl('googles', 'http://www.google.com).getList();</code></li>
+  <li>several(route, ids*): <code>Restangular.several('accounts', 123,1234)</code></li>
+  <li>copy(fromElement): <code>var fA = accounts[0]; var copyA = Restangular.copy(fA); copyA.put();</code></li>
+  <li>restangularizeElement(parent, element, route, queryParams) //need try应该可以拿到</li>
+  <li>restangularizeCollection(parent, element, route, queryParams)</li>
+  </ul>
+</blockquote>
+
+<h4 id="element-methods"><strong>Element Methods</strong></h4>
+
+<blockquote>
+  <ul>
+  <li>get([queryParams, headers]): <code>virtualMachineList = env.get({expand:'virtualMachines'});</code></li>
+  <li>getList(subElements, [queryParams, headers]): get a nested resource</li>
+  <li>put([queryParams, headers])</li>
+  <li>post(subElement, elementToPost, [queryParams, headers])</li>
+  <li>remove([queryParams, headers])</li>
+  <li>getRestangularUrl()/getRequestedUrl()</li>
+  <li>getParentLst();</li>
+  <li>withHttpConfig(httpConfig): <code>.one(...).withHttpConfig({timeout: 100}).getList(...);</code></li>
+  <li>save: put or post accordingly</li>
+  <li>clone: = Restangular.copy(element)</li>
+  </ul>
+</blockquote>
+
+<h4 id="collection-methods"><strong>Collection Methods</strong></h4>
+
+<blockquote>
+  <ul>
+  <li>getList([queryParams, headers])</li>
+  <li>get([id]): get one from collection</li>
+  <li>post(elementToPost, [queryParams, headers]), no put</li>
+  <li>clone: = Restangular.copy(collection)</li>
+  </ul>
+</blockquote>
+
+<h4 id="custom-method"><strong>Custom Method</strong></h4>
+
+<blockquote>
+  <p>add path to each method.</p>
+  
+  <ul>
+  <li>customGET(path, [params, headers])</li>
+  <li>customGETLIST(path, [params, headers])</li>
+  <li><strong>addRestangularMethod(name, operation, [path, params, headers, elem])</strong></li>
+  </ul>
+</blockquote>
+
+<p>it seems no difference…</p>
+
+<pre class="prettyprint"><code class=" hljs avrasm">// GET /accounts/<span class="hljs-number">123</span>/messages
+Restangular<span class="hljs-preprocessor">.one</span>(<span class="hljs-string">"accounts"</span>, <span class="hljs-number">123</span>)<span class="hljs-preprocessor">.customGET</span>(<span class="hljs-string">"messages"</span>)
+
+// GET /accounts/messages?param=param2
+Restangular<span class="hljs-preprocessor">.all</span>(<span class="hljs-string">"accounts"</span>)<span class="hljs-preprocessor">.customGET</span>(<span class="hljs-string">"messages"</span>, {param: <span class="hljs-string">"param2"</span>})</code></pre>
+
+<p><br></p>
+
+
+
+<h4 id="using-restangular-element-in-html"><strong>Using Restangular element in HTML</strong></h4>
+
+
+
+<pre class="prettyprint"><code class=" hljs handlebars"><span class="xml">$scope.accounts = Restangular.all('accounts').getList().$object;
+<span class="hljs-tag">&lt;<span class="hljs-title">tr</span> <span class="hljs-attribute">ng-repeat</span>=<span class="hljs-value">"account in accounts"</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">td</span>&gt;</span></span><span class="hljs-expression">{{<span class="hljs-variable">account.name</span>}}</span><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-title">td</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">tr</span>&gt;</span></span></code></pre>
+
+<p><br></p>
+
+
+
+<h4 id="creating-new-restangular-method"><strong>Creating new Restangular Method</strong></h4>
+
+<p><code>addRestangularMethod</code> can be used together with hook <code>addElementTransformer</code></p>
+
+
+
+<pre class="prettyprint"><code class=" hljs javascript"><span class="hljs-comment">// It will transform all building elements, NOT collections</span>
+RestangularProvider.addElementTransformer(<span class="hljs-string">'buildings'</span>, <span class="hljs-literal">false</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(building)</span> {</span>
+        <span class="hljs-comment">// signature is (name, operation, path, params, headers, elementToPost)</span>
+        building.addRestangularMethod(<span class="hljs-string">'evaluate'</span>, <span class="hljs-string">'get'</span>, <span class="hljs-string">'evaluate'</span>, <span class="hljs-literal">undefined</span>, {<span class="hljs-string">'myHeader'</span>: <span class="hljs-string">'value'</span>});
+        <span class="hljs-keyword">return</span> building;
+});
+Restangular.one(<span class="hljs-string">'buildings'</span>, <span class="hljs-number">123</span>).evaluate({myParam: <span class="hljs-string">'param'</span>});
+<span class="hljs-comment">// GET to /buildings/123/evaluate?myParam=param with headers myHeader: specialHeaderCase</span>
+Restangular.one(<span class="hljs-string">'buildings'</span>, <span class="hljs-number">123</span>).evaluate({myParam: <span class="hljs-string">'param'</span>}, {<span class="hljs-string">'myHeader'</span>: <span class="hljs-string">'specialHeaderCase'</span>});</code></pre>
+
+
+
+<pre class="prettyprint"><code class=" hljs javascript">RestangularProvider.addElementTransformer(<span class="hljs-string">'users'</span>, <span class="hljs-literal">true</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(user)</span> {</span>
+        <span class="hljs-comment">// This will add a method called login that will do a POST to the path login</span>
+        <span class="hljs-comment">// signature is (name, operation, path, params, headers, elementToPost)</span>
+        user.addRestangularMethod(<span class="hljs-string">'login'</span>, <span class="hljs-string">'post'</span>, <span class="hljs-string">'login'</span>);
+        <span class="hljs-keyword">return</span> user;
+});
+<span class="hljs-comment">// Here the body of the POST is going to be {key: value} as POST is an unsafe operation</span>
+Restangular.all(<span class="hljs-string">'users'</span>).login({key: value});</code></pre>
+
+<p><br></p>
+
+<h4 id="adding-custom-method-to-collectionsmodels"><strong>Adding Custom Method to Collections/Models</strong></h4>
+
+<p><em>to Collection</em> : an alias for <code>Restangular.addElementTransformer(route, false, fn)</code></p>
+
+<pre class="prettyprint"><code class=" hljs javascript">  <span class="hljs-comment">// create methods for your collection</span>
+  Restangular.extendCollection(<span class="hljs-string">'accounts'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(collection)</span> {</span>
+    collection.totalAmount = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+      <span class="hljs-comment">// implementation here</span>
+    };
+    <span class="hljs-keyword">return</span> collection;
+  });
+
+  <span class="hljs-keyword">var</span> accountsPromise = Restangular.all(<span class="hljs-string">'accounts'</span>).getList();
+
+  accountsPromise.then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(accounts)</span> {</span>
+    accounts.totalAmount(); <span class="hljs-comment">// invoke your custom collection method</span>
+  });</code></pre>
+
+<p><br> <br>
+<em>to Model</em>: an alias for <code>Restangular.addElementTransformer(route, true, fn)</code></p>
+
+
+
+<pre class="prettyprint"><code class=" hljs actionscript">  Restangular.extendModel(<span class="hljs-string">'accounts'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(model)</span> {</span>
+    model.prettifyAmount = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>};
+    <span class="hljs-keyword">return</span> model;
+  });
+
+  <span class="hljs-keyword">var</span> accountPromise = Restangular.one(<span class="hljs-string">'accounts'</span>, <span class="hljs-number">1</span>).<span class="hljs-keyword">get</span>();
+
+  accountPromise.then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(account)</span> {</span>
+    account.prettifyAmount(); <span class="hljs-comment">// invoke your custom model method</span>
+  });</code></pre>
+
+<p>Reference:  <br>
+<a href="https://github.com/superlin/reading/blob/659b28e758806394c3a4fe44b914e79af5beec04/the-complete-book-on-angularjs/xhr-restangular.md">https://github.com/superlin/reading/blob/659b28e758806394c3a4fe44b914e79af5beec04/the-complete-book-on-angularjs/xhr-restangular.md</a></p></div></body>
+</html>
